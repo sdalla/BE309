@@ -1,57 +1,71 @@
 
+% update directory for every leg
+files = dir('/Users/olang/Documents/MATLAB/BE309/CMI/CSVs/*.csv');
+direction = input('Does this leg CONTRACT in cw or ccw direction?');
+direction = strcmp('cw', direction); % cw is true, ccw is false
 
-% INPUT
-csv_filename = 'L2700Hz1Vpp.csv';
+%Get Data from every trial
+for file = files' 
+    %% Trial Specific Info
+    csv_filename = file.name;
+    leg = str2double(csv_filename(2));
+    freq = str2double(csv_filename(3:(find(csv_filename=='H')-1)));
+    amp = csv_filename((find(csv_filename=='z')+1):(find(csv_filename=='V')-1));
+    if (strcmp(amp, '1_5'))
+        amp = 1.5;
+    else
+        if (strcmp(amp, '05'))
+            amp = 0.5;
+        else
+            amp = 1;
+        end
+    end
 
-% Video Specific Info
-leg = str2num(csv_filename(2));
-freq = str2num(csv_filename(3:(find(csv_filename=='H')-1)));
-amp = str2num(csv_filename((find(csv_filename=='z')+1):(find(csv_filename=='V')-1)));
+    %% READ IN DATA
+    csv_filepath = ['/Users/olang/Documents/MATLAB/BE309/CMI/CSVs/', csv_filename];
+    data = readtable(csv_filepath);
+    knee = table2array(data(1,:));
+    ankle = table2array(data(2:end,:));
 
-% READ IN DATA
-csv_filepath = ['/Users/olang/Documents/MATLAB/BE309/CMI/CSVs/', csv_filename];
-data = readtable(csv_filepath);
-knee = table2array(data(1,:));
-ankle = table2array(data(2:end,:));
+    %% ANALYSIS
+    start = ankle(1,:); % Initial Location
+    initangle = get_angle(knee, start);
 
-% ANALYSIS
-start = ankle(1,:); % Initial Location
+    angle_change = zeros(length(ankle), 1);
+    for i = 1:length(ankle)
+        angle_change(i) = get_angle(knee,ankle(i,:)) - initangle;
+    end
 
-% GET MAXIMUM EXTENSION
-[~, indmaxext] = max(ankle(:,1));
-max_ext = ankle(indmaxext, :);
+    
+    %{
+    todo: 
+    depending on whether it is ccw or cw, figure out how to handle the data
+    put the leg data into their own directories
+    
+    %}
 
-% GET RELAXATION AFTER EXTENSION
-[~, indextrelax] = min(ankle(indmaxext:end,1));
-ext_relax = ankle(indextrelax, :);
+    %% Append to CSV
+    newrow = [leg freq amp ext extrel cont contrel];
+    dlmwrite('master_data.csv',newrow,'-append');
+end
 
-% GET MAXIMUM CONTRACTION
-[~, indmaxcont] = min(ankle(:,1));
-max_cont = ankle(indmaxcont, :);
+function theta = get_angle(v, p1) 
+v1 = [1,0]; % i + 0j;
+v2 = [p1(1)-v(1) p1(2)-v(2)]; % head minus tail
 
-% GET RELAXATION AFTER CONTRACTION
-[~, indcontrelax] = max(ankle(indmaxcont:end,1));
-cont_relax = ankle(indcontrelax, :);
+v1mag = sqrt(v1(1)^2 + v1(2)^2);
+v2mag = sqrt(v2(1)^2 + v2(2)^2);
 
-%% Finding Angles
+dotprod = v1(1)*v2(1) + v1(2)*v2(2);
 
-% Extension:
-ext = get_angle(knee, start, max_ext);
-extrel = get_angle(knee, start, ext_relax);
-cont = get_angle(knee, start, max_cont);
-contrel = get_angle(knee, start, cont_relax);
+cosineval = dotprod / (v1mag * v2mag);
 
+theta = acos(cosineval) * 180 / pi;
 
-%% Append to CSV
-newrow = [leg freq amp ext extrel cont contrel];
-dlmwrite('master_data.csv',newrow,'-append');
+if (v2mag == 0)
+    theta = 0;
+end
 
-function theta = get_angle(v, p1, p2) 
-a = sqrt((v(1) - p1(1))^2 + (v(2) - p1(2))^2);
-b = sqrt((v(1) - p2(1))^2 + (v(2) - p2(2))^2);
-c = sqrt((p1(1) - p2(1))^2 + (p1(2) - p2(2))^2);
-
-theta = acos((a^2 + b^2 - c^2)/(2*a*b));
 end
 
 
