@@ -1,3 +1,3 @@
 NOTES ON MASTER DATA:
 
-Since no frequencies will both extend AND contract, we place value only in the greater one, or if they are both small, we do not place any value in them for the frequency did not work. Ignore the extra calculations in these cases. — Liv
+Since no frequencies will both extend AND contract, we place value only in the greater one, or if they are both small, we do not place any value in them for the frequency did not work. Ignore the extra calculations in these cases. Also it will give us duplicates but we can fix that later. — Liv
