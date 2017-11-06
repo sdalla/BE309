@@ -29,19 +29,23 @@ for file = files'
 
     %% ANALYSIS
     start = ankle(1,:); % Initial Location
-    initangle = get_angle(knee, start);
 
-    angle_change = zeros(length(ankle), 1);
+    angle = zeros(length(ankle), 1);
     for i = 1:length(ankle)
-        angle_change(i) = get_angle(knee,ankle(i,:)) - initangle;
+        angle(i) = get_angle(knee,start,ankle(i,:),direction);
     end
+    
+    [ext, extind] = max(angle);
+    extrel = max(angle(extind:end));
+    [cont, contind] = min(angle);
+    contrel = min(angle(contind:end));
+    
+    % IF CONTRACTS IN CCW DIR, CONTRACTIONS ARE 
 
     
     %{
     todo: 
-    depending on whether it is ccw or cw, figure out how to handle the data
-    put the leg data into their own directories
-    
+    put the leg data into their own directories and re-run
     %}
 
     %% Append to CSV
@@ -49,21 +53,27 @@ for file = files'
     dlmwrite('master_data.csv',newrow,'-append');
 end
 
-function theta = get_angle(v, p1) 
-v1 = [1,0]; % i + 0j;
-v2 = [p1(1)-v(1) p1(2)-v(2)]; % head minus tail
+function theta = get_angle(v, start, p2, dir) 
+v1 = [start(1)-v(1) start(2)-v(2) 0]; % head minus tail
+v2 = [p2(1)-v(1) p2(2)-v(2) 0]; % head minus tail
 
 v1mag = sqrt(v1(1)^2 + v1(2)^2);
 v2mag = sqrt(v2(1)^2 + v2(2)^2);
 
-dotprod = v1(1)*v2(1) + v1(2)*v2(2);
+dotprod = dot(v1, v2);
 
 cosineval = dotprod / (v1mag * v2mag);
 
 theta = acos(cosineval) * 180 / pi;
 
-if (v2mag == 0)
+if (v2mag == 0 || v1mag == 0)
     theta = 0;
+end
+
+crossprod = cross(v1,v2);
+crossprod = crossprod(3);
+if ((dir == 1 && crossprod < 0) || (dir == 0 && crossprod > 0)) 
+    theta = -theta;
 end
 
 end
