@@ -1,0 +1,12 @@
+file1 = 'amp1.xlsx';
+file1_5 = 'amp1_5.xlsx';
+
+data1 = readtable(file1);
+data1_5 = readtable(file1_5);
+
+tbl1 = table(data1.leg, data1.freq, data1.masterval);
+tbl1_5 = table(data1_5.leg, data1_5.freq, data1_5.masterval);
+
+
+h1 = heatmap(tbl1,'leg','freq');
+h1_5 = heatmap(tbl1_5,'leg','freq');
